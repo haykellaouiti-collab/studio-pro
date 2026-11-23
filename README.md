@@ -1,24 +1,15 @@
-# Studio Pro — HAK IA
+# Studio Pro — HAK IA (v1.0)
 
-Application SaaS de traitement vidéo et audio local dans le navigateur (React + Vite + FFmpeg.wasm + Supabase + Dodo Payments).
+Suite professionnelle de traitement vidéo et d'assemblage multi-clips exécutée **100 % localement dans le navigateur** grâce à WebAssembly (`FFmpeg.wasm`), avec authentification **Supabase**, quotas serveur atomiques et abonnements **Dodo Payments**.
 
-## Architecture (Standards HAK IA)
-- `src/core/` : Authentification Supabase, vérification d'abonnement **Creator** et garde-fous de quotas.
-- `src/processors/` : Moteur `FFmpeg.wasm` singleton (`ffmpegEngine.js`), anonymiseur (`anonymizerProcessor.js`) et assemblage multi-clips (`studioMixerProcessor.js`).
-- `src/utils/` : Validation des fichiers vidéo, gestion déterministe des ressources mémoire (`ResourceTracker`) et journalisation.
-- `src/ui/` : Composants React isolés de la logique de traitement.
-- `tests/` : Suite de tests unitaires Vitest (`npm test`).
-- `supabase/functions/dodo-webhook/` : Synchronisation automatique des paiements Dodo Payments vers la table `subscriptions`.
+## Fonctionnalités v1.0
+- **Anonymiseur Vidéo** : suppression des métadonnées (`-map_metadata -1`) et des chapitres (`-map_chapters -1`), ré-encodage H.264/AAC (*Deep Clean*) pour les abonnés Creator.
+- **Studio Multi-Clips** : assemblage ordonné (2 clips max en Gratuit, jusqu'à 10 clips en Creator) en format `16:9` ou `9:16` (`720p` ou `1080p`).
+- **Watermark automatique** : filigrane `Studio Pro · HAK IA` incrusté sur le plan Gratuit, retiré sur le plan Creator.
+- **Sécurité & Quotas serveur** : table `export_usage` + fonction PostgreSQL atomique `reserve_export` + Edge Function `export-gate`.
+- **Paiements & Realtime** : intégration Dodo Payments (`10 $/mois`) avec webhook HMAC (`dodo-webhook`) et mise à jour instantanée via Supabase Realtime.
 
-## Installation & Tests locaux
-```bash
-npm install
-npm test
-npm run dev
-```
-
-## Déploiement GitHub + Vercel
-1. Poussez ce dossier sur votre dépôt GitHub.
-2. Importez le projet dans Vercel (Framework Preset : **Vite**).
-3. Ajoutez `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` dans les variables d'environnement Vercel.
-4. `vercel.json` applique automatiquement les en-têtes `Cross-Origin-Opener-Policy` et `Cross-Origin-Embedder-Policy` requis par `FFmpeg.wasm`.
+## Déploiement GitHub Pages
+1. Déposez l'ensemble des fichiers à la racine de la branche `main` de votre dépôt GitHub.
+2. Dans **Settings → Pages**, sélectionnez la branche `main` et le dossier `/ (root)`.
+3. Exécutez les 3 fichiers SQL situés dans `supabase/migrations/` dans le **SQL Editor** de votre projet Supabase.
