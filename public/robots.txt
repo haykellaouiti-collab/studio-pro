@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://hak-ia-studio.vercel.app/sitemap.xml
+
+Sitemap: https://haykellaouiti-collab.github.io/studio-pro/sitemap.xml
