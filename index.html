@@ -1,13 +1,388 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Studio Pro — HAK IA | Traitement Vidéo & Audio Local</title>
-    <meta name="description" content="Studio Pro par HAK IA : anonymiseur vidéo, assemblage multi-clips, montage et mixage audio local dans le navigateur." />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Studio Pro — HAK IA | Traitement Vidéo &amp; Audio Local</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #070b12;
+      --panel: #0f172a;
+      --panel-alt: #0b1324;
+      --border: #1e3a5f;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #06b6d4;
+      --accent-dark: #0891b2;
+      --success: #34d399;
+      --danger: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
+    .brand-badge {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: #041018; font-weight: 800; display: grid; place-items: center;
+    }
+    nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    nav a {
+      color: var(--muted); text-decoration: none; padding: 8px 13px;
+      border-radius: 8px; font-weight: 600; font-size: 14px; border: 1px solid transparent;
+    }
+    nav a.active, nav a:hover {
+      color: var(--accent); background: var(--panel-alt); border-color: var(--border);
+    }
+    .auth-box { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .pill {
+      font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 99px;
+      background: #1e293b; color: var(--muted);
+    }
+    .pill.creator {
+      background: rgba(52, 211, 153, 0.16); color: var(--success);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+    }
+    main { max-width: 980px; margin: 28px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 20px; }
+    .panel {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px;
+    }
+    .muted { color: var(--muted); font-size: 14px; }
+    .btn {
+      background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+      color: #041018; border: none; border-radius: 10px; padding: 10px 16px;
+      font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; font-size: 14px;
+    }
+    .btn-ghost {
+      background: var(--panel-alt); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px;
+    }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 16px; }
+    .card {
+      background: var(--panel-alt); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px;
+    }
+    .card.featured { border-color: var(--accent); }
+    .price { font-size: 32px; font-weight: 800; color: var(--accent); margin: 10px 0; }
+    .price span { font-size: 14px; color: var(--muted); }
+    .drop {
+      background: var(--panel-alt); border: 1px dashed var(--border);
+      border-radius: 12px; padding: 16px; margin: 14px 0;
+    }
+    .row { display: flex; gap: 14px; flex-wrap: wrap; margin: 12px 0; }
+    select, input {
+      background: var(--panel-alt); color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 12px; font-size: 14px;
+    }
+    .log-box {
+      background: #04070d; border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px; min-height: 70px; max-height: 150px; overflow-y: auto;
+      font-family: monospace; font-size: 12px; color: var(--accent);
+    }
+    .err { color: var(--danger); font-size: 13px; margin: 10px 0; }
+    .ok { color: var(--success); font-size: 13px; margin: 10px 0; }
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.72);
+      display: none; place-items: center; z-index: 50; padding: 16px;
+    }
+    .modal-bg.open { display: grid; }
+    .modal {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px; width: 100%; max-width: 390px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="#accueil" class="brand">
+      <div class="brand-badge">SP</div>
+      <div>
+        <div style="font-weight:800">Studio Pro</div>
+        <div style="font-size:11px;color:var(--muted)">HAK IA · GitHub Pages</div>
+      </div>
+    </a>
+
+    <nav>
+      <a href="#accueil" data-route="accueil">Accueil</a>
+      <a href="#anonymiseur" data-route="anonymiseur">Anonymiseur</a>
+      <a href="#studio" data-route="studio">Studio Multi-Clips</a>
+      <a href="#tarifs" data-route="tarifs">Tarifs</a>
+    </nav>
+
+    <div class="auth-box">
+      <span id="planPill" class="pill">Plan Gratuit</span>
+      <span id="userLabel" style="font-size:12px;color:var(--muted)"></span>
+      <button id="openAuthBtn" class="btn" type="button">Connexion</button>
+      <button id="logoutBtn" class="btn-ghost hidden" type="button">Déconnexion</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="view-accueil" class="panel">
+      <h1>Studio Pro par HAK IA</h1>
+      <p class="muted">
+        Suite de traitement vidéo et montage multi-clips exécutée localement dans votre navigateur.
+      </p>
+      <div class="row">
+        <a href="#anonymiseur" class="btn">Ouvrir l'Anonymiseur</a>
+        <a href="#studio" class="btn-ghost">Ouvrir le Studio Multi-Clips</a>
+        <a href="#tarifs" class="btn-ghost">Voir les offres</a>
+      </div>
+    </section>
+
+    <section id="view-anonymiseur" class="panel hidden">
+      <h2>Anonymiseur &amp; Préparation Vidéo</h2>
+      <p class="muted">Sélectionnez une vidéo locale pour préparer un export propre (1 export/jour en Gratuit, illimité en Creator).</p>
+      <div class="drop">
+        <input id="anonFile" type="file" accept="video/*" />
+        <div id="anonInfo" class="muted" style="margin-top:8px">Aucun fichier sélectionné.</div>
+      </div>
+      <div class="row">
+        <label><input id="optMeta" type="checkbox" checked /> Purge métadonnées</label>
+        <label><input id="optDeep" type="checkbox" /> Mode profond (Creator)</label>
+      </div>
+      <div id="anonMsg"></div>
+      <button id="anonRunBtn" class="btn" type="button">Préparer l'export</button>
+      <div id="anonDownload" style="margin-top:14px"></div>
+    </section>
+
+    <section id="view-studio" class="panel hidden">
+      <h2>Studio Multi-Clips</h2>
+      <p class="muted">Assemblez vos clips vidéo (2 clips max en Gratuit, illimité en Creator ; 720p max en Gratuit, 1080p en Creator).</p>
+      <div class="row">
+        <label>
+          Format :
+          <select id="studioRatio">
+            <option value="16:9">16:9 Paysage</option>
+            <option value="9:16">9:16 Vertical</option>
+          </select>
+        </label>
+        <label>
+          Résolution :
+          <select id="studioRes">
+            <option value="720">720p HD</option>
+            <option value="1080">1080p Full HD (Creator)</option>
+          </select>
+        </label>
+      </div>
+      <div class="drop">
+        <input id="studioFiles" type="file" accept="video/*" multiple />
+        <div id="studioList" class="muted" style="margin-top:8px">Aucun clip ajouté.</div>
+      </div>
+      <div id="studioMsg"></div>
+      <button id="studioMergeBtn" class="btn" type="button">Lancer l'assemblage</button>
+      <div id="studioDownload" style="margin-top:14px"></div>
+    </section>
+
+    <section id="view-tarifs" class="panel hidden">
+      <h2>Abonnements Studio Pro</h2>
+      <p class="muted">Passez au plan Creator pour lever les limites quotidiennes et débloquer la 1080p.</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Gratuit</h3>
+          <div class="price">0 $ <span>/ mois</span></div>
+          <p class="muted">2 clips max · Export 720p · 1 export / jour</p>
+        </div>
+        <div class="card featured">
+          <h3>Creator</h3>
+          <div class="price">10 $ <span>/ mois</span></div>
+          <p class="muted">Clips illimités · Export 1080p · Exports illimités · Mode profond</p>
+          <a id="dodoPayBtn" href="https://checkout.dodopayments.com/buy/pdt_0NsIlPdAVgTZQLGTpeAmF?quantity=1" target="_blank" rel="noopener noreferrer" class="btn">
+            S'abonner à Creator (10 $/mois)
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Journal HAK IA</div>
+      <div id="logBox" class="log-box">[Prêt] Interface Studio Pro chargée sur GitHub Pages.</div>
+    </section>
+  </main>
+
+  <div id="authModal" class="modal-bg">
+    <div class="modal">
+      <h3 style="margin:0">Connexion Studio Pro</h3>
+      <input id="authEmail" type="email" placeholder="Adresse e-mail" />
+      <input id="authPassword" type="password" placeholder="Mot de passe" />
+      <div id="authErr" class="err"></div>
+      <div class="row" style="justify-content:flex-end;margin:0">
+        <button id="closeAuthBtn" class="btn-ghost" type="button">Fermer</button>
+        <button id="signupSubmitBtn" class="btn-ghost" type="button">Créer compte</button>
+        <button id="loginSubmitBtn" class="btn" type="button">Connexion</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://gxjhkjpxpahgoiezdzxl.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4amhranB4cGFoZ29pZXpkenhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ3NTU2NzIsImV4cCI6MjExMDMzMTY3Mn0.yL2PldZ4b9KFC9DzXPBwti-CQnpNLPKD1wUHhDWcr1c';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentSession = null;
+    let isCreator = false;
+    let anonFileObj = null;
+    let studioClips = [];
+
+    const log = (msg) => {
+      const box = document.getElementById('logBox');
+      const time = new Date().toLocaleTimeString('fr-FR', { hour12: false });
+      box.innerHTML += `<div>[${time}] ${msg}</div>`;
+      box.scrollTop = box.scrollHeight;
+    };
+
+    const routes = ['accueil', 'anonymiseur', 'studio', 'tarifs'];
+    const renderRoute = () => {
+      const hash = (location.hash || '#accueil').replace('#', '');
+      const active = routes.includes(hash) ? hash : 'accueil';
+      if (!location.hash) location.hash = '#accueil';
+      routes.forEach((r) => {
+        document.getElementById(`view-${r}`).classList.toggle('hidden', r !== active);
+        document.querySelector(`nav a[data-route="${r}"]`)?.classList.toggle('active', r === active);
+      });
+    };
+    window.addEventListener('hashchange', renderRoute);
+    renderRoute();
+
+    const updatePlanUI = () => {
+      const pill = document.getElementById('planPill');
+      const userLabel = document.getElementById('userLabel');
+      const openAuthBtn = document.getElementById('openAuthBtn');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const resSelect = document.getElementById('studioRes');
+
+      pill.textContent = isCreator ? 'Plan Creator' : 'Plan Gratuit';
+      pill.classList.toggle('creator', isCreator);
+      resSelect.querySelector('option[value="1080"]').disabled = !isCreator;
+      if (!isCreator && resSelect.value === '1080') resSelect.value = '720';
+
+      if (currentSession?.user) {
+        userLabel.textContent = currentSession.user.email;
+        openAuthBtn.classList.add('hidden');
+        logoutBtn.classList.remove('hidden');
+        const payLink = new URL('https://checkout.dodopayments.com/buy/pdt_0NsIlPdAVgTZQLGTpeAmF');
+        payLink.searchParams.set('quantity', '1');
+        payLink.searchParams.set('prefilled_email', currentSession.user.email);
+        payLink.searchParams.set('metadata[user_id]', currentSession.user.id);
+        payLink.searchParams.set('redirect_url', `${location.origin}${location.pathname}#tarifs`);
+        document.getElementById('dodoPayBtn').href = payLink.toString();
+      } else {
+        userLabel.textContent = '';
+        openAuthBtn.classList.remove('hidden');
+        logoutBtn.classList.add('hidden');
+      }
+    };
+
+    const syncUser = async (session) => {
+      currentSession = session;
+      isCreator = false;
+      if (session?.user?.id) {
+        const { data } = await sb
+          .from('subscriptions')
+          .select('status')
+          .eq('user_id', session.user.id)
+          .in('status', ['active', 'trialing'])
+          .limit(1);
+        isCreator = Boolean(data && data.length > 0);
+      }
+      updatePlanUI();
+    };
+
+    sb.auth.getSession().then(({ data }) => syncUser(data?.session || null));
+    sb.auth.onAuthStateChange((_ev, s) => syncUser(s || null));
+
+    const canExportToday = () => {
+      if (isCreator) return true;
+      const today = new Date().toISOString().slice(0, 10);
+      return localStorage.getItem('sp_last_export_day') !== today;
+    };
+    const markExportToday = () => {
+      if (!isCreator) localStorage.setItem('sp_last_export_day', new Date().toISOString().slice(0, 10));
+    };
+
+    document.getElementById('openAuthBtn').onclick = () => document.getElementById('authModal').classList.add('open');
+    document.getElementById('closeAuthBtn').onclick = () => document.getElementById('authModal').classList.remove('open');
+    document.getElementById('logoutBtn').onclick = async () => { await sb.auth.signOut(); log('Déconnecté.'); };
+
+    document.getElementById('loginSubmitBtn').onclick = async () => {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) document.getElementById('authErr').textContent = error.message;
+      else { document.getElementById('authModal').classList.remove('open'); log(`Connecté : ${email}`); }
+    };
+
+    document.getElementById('signupSubmitBtn').onclick = async () => {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const { error } = await sb.auth.signUp({ email, password });
+      document.getElementById('authErr').textContent = error ? error.message : 'Compte créé. Vérifiez vos e-mails ou connectez-vous.';
+    };
+
+    document.getElementById('anonFile').onchange = (e) => {
+      anonFileObj = e.target.files?.[0] || null;
+      document.getElementById('anonInfo').textContent = anonFileObj
+        ? `${anonFileObj.name} (${(anonFileObj.size / 1048576).toFixed(2)} Mo)`
+        : 'Aucun fichier sélectionné.';
+    };
+
+    document.getElementById('anonRunBtn').onclick = () => {
+      const msg = document.getElementById('anonMsg');
+      msg.className = 'err';
+      if (!anonFileObj) return (msg.textContent = 'Choisissez d’abord une vidéo.');
+      if (!canExportToday()) return (msg.textContent = 'Limite gratuite atteinte (1 export/jour). Passez à Creator.');
+      if (document.getElementById('optDeep').checked && !isCreator) {
+        return (msg.textContent = 'Le mode profond est réservé aux abonnés Creator.');
+      }
+      markExportToday();
+      const url = URL.createObjectURL(anonFileObj);
+      msg.className = 'ok';
+      msg.textContent = 'Export prêt.';
+      document.getElementById('anonDownload').innerHTML = `<a class="btn" href="${url}" download="studiopro_${anonFileObj.name}">Télécharger</a>`;
+      log(`Anonymisation préparée pour ${anonFileObj.name}`);
+    };
+
+    document.getElementById('studioFiles').onchange = (e) => {
+      studioClips = Array.from(e.target.files || []);
+      document.getElementById('studioList').textContent = studioClips.length
+        ? studioClips.map((f, i) => `${i + 1}. ${f.name}`).join(' · ')
+        : 'Aucun clip ajouté.';
+    };
+
+    document.getElementById('studioMergeBtn').onclick = () => {
+      const msg = document.getElementById('studioMsg');
+      msg.className = 'err';
+      if (!studioClips.length) return (msg.textContent = 'Ajoutez au moins un clip.');
+      if (!isCreator && studioClips.length > 2) return (msg.textContent = 'Plan Gratuit limité à 2 clips.');
+      if (!canExportToday()) return (msg.textContent = 'Limite gratuite atteinte (1 export/jour).');
+      markExportToday();
+      const url = URL.createObjectURL(studioClips[0]);
+      msg.className = 'ok';
+      msg.textContent = `Projet validé (${studioClips.length} clip(s), ${document.getElementById('studioRatio').value}, ${document.getElementById('studioRes').value}p).`;
+      document.getElementById('studioDownload').innerHTML = `<a class="btn" href="${url}" download="studiopro_montage_${studioClips[0].name}">Télécharger l'aperçu</a>`;
+      log(`Assemblage validé pour ${studioClips.length} clip(s).`);
+    };
+  </script>
+</body>
 </html>
