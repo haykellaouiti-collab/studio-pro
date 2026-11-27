@@ -468,9 +468,14 @@
           ffmpeg.on('progress', ({ progress }) => onProgress(Math.min(99, Math.round((progress || 0) * 100))));
         }
 
+        const workerURL = await toBlobURL(
+          'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/814.ffmpeg.js',
+          'text/javascript'
+        );
         const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
         log('Chargement du moteur WebAssembly FFmpeg (0.12)...');
         await ffmpeg.load({
+          workerURL,
           coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
           wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm')
         });
