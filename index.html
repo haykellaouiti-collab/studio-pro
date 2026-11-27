@@ -377,7 +377,7 @@
   <script>
     const CONFIG = {
       SUPABASE_URL: 'https://bvzqkpoocgsbhusyzakg.supabase.co',
-      SUPABASE_ANON_KEY: 'VOTRE_CLE_ANON_PUBLIQUE_BVZQKPOOCGSBHUSYZAKG',
+      SUPABASE_ANON_KEY: 'sb_publishable__7HNB1iDCjfWATKMFY4MVQ_tBGJotyw',
       DODO_CHECKOUT_URL: 'https://checkout.dodopayments.com/buy/pdt_0NsIlPdAVgTZQLGTpeAmF',
       MAX_FILE_BYTES: 500 * 1024 * 1024,
       ALLOWED_EXTS: ['mp4', 'mov', 'webm', 'mkv'],
@@ -592,8 +592,7 @@
         }
 
         onProgress(90, 'Assemblage final des clips...');
-        const concatTxt = normNames.map((n) => `file '${n}'`).join('
-');
+        const concatTxt = normNames.map((n) => `file '${n}'`).join('\n');
         await ffmpeg.writeFile('concat.txt', new TextEncoder().encode(concatTxt));
         tempFiles.push('concat.txt', 'studio_final.mp4');
 
