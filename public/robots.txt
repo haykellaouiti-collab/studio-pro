@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://haykellaouiti-collab.github.io/studio-pro/sitemap.xml
+Sitemap: https://studio-pro-nine.vercel.app/sitemap.xml
