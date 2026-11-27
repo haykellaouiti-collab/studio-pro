@@ -376,8 +376,8 @@
 
   <script>
     const CONFIG = {
-      SUPABASE_URL: 'https://gxjhkjpxpahgoiezdzxl.supabase.co',
-      SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4amhranB4cGFoZ29pZXpkenhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ3NTU2NzIsImV4cCI6MjExMDMzMTY3Mn0.yL2PldZ4b9KFC9DzXPBwti-CQnpNLPKD1wUHhDWcr1c',
+      SUPABASE_URL: 'https://bvzqkpoocgsbhusyzakg.supabase.co',
+      SUPABASE_ANON_KEY: 'VOTRE_CLE_ANON_PUBLIQUE_BVZQKPOOCGSBHUSYZAKG',
       DODO_CHECKOUT_URL: 'https://checkout.dodopayments.com/buy/pdt_0NsIlPdAVgTZQLGTpeAmF',
       MAX_FILE_BYTES: 500 * 1024 * 1024,
       ALLOWED_EXTS: ['mp4', 'mov', 'webm', 'mkv'],
@@ -592,7 +592,8 @@
         }
 
         onProgress(90, 'Assemblage final des clips...');
-        const concatTxt = normNames.map((n) => `file '${n}'`).join('\n');
+        const concatTxt = normNames.map((n) => `file '${n}'`).join('
+');
         await ffmpeg.writeFile('concat.txt', new TextEncoder().encode(concatTxt));
         tempFiles.push('concat.txt', 'studio_final.mp4');
 
